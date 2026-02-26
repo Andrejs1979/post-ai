@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Category:** devtools
+**Category:** ai/ml  [was: ai/ml]
 
 **AI-Native PostgreSQL Platform for Global Scale** --- **Document Information** 
 
