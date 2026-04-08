@@ -15,7 +15,7 @@ const { title } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
+    <script is:inline>
       tailwind.config = {
         darkMode: 'class',
         theme: {

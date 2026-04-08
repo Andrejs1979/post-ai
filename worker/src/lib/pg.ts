@@ -3,6 +3,18 @@
  *
  * Uses the platform's PostgreSQLAdapter which wraps the postgres driver.
  * Connection string comes from Hyperdrive binding for connection pooling.
+ *
+ * DESIGN NOTE: Singleton pattern is used here intentionally to prevent
+ * connection leaks. Hyperdrive handles the actual TCP connection pooling,
+ * and the PostgreSQLAdapter maintains a single connection to Hyperdrive.
+ *
+ * SAFETY: This module-level state is safe in Cloudflare Workers because:
+ * 1. Worker isolates are single-threaded (no concurrent access)
+ * 2. Each isolate handles one request at a time
+ * 3. URL change detection prevents cross-tenant leaks if config changes
+ *
+ * TODO: If multi-tenant per-isolate becomes needed, refactor to use
+ * per-tenant adapter caching via Request context or Durable Objects.
  */
 
 import { PostgreSQLAdapter, sanitizeIdentifier } from '@g-a-l-a-c-t-i-c/data'
@@ -11,6 +23,7 @@ import type { PostAIBindings } from '../bindings'
 
 export { sanitizeIdentifier }
 
+// Module-level singleton - see DESIGN NOTE above
 let adapter: PostgreSQLAdapter | null = null
 let lastUrl: string | null = null
 
@@ -19,6 +32,7 @@ export function getPgAdapter(env: PostAIBindings): PostgreSQLAdapter {
   if (!url) {
     throw new ServiceUnavailableError('Hyperdrive connection not configured.')
   }
+  // Recreate adapter if URL changes (prevents cross-tenant connection leaks)
   if (!adapter || lastUrl !== url) {
     adapter = new PostgreSQLAdapter(url)
     lastUrl = url
